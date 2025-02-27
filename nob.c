@@ -2,18 +2,23 @@
 #define NOB_STRIP_PREFIX
 #include "nob.h"
 
+bool target_windows = true;
+
 int main(int argc, char **argv) {
     NOB_GO_REBUILD_URSELF(argc, argv);
 
     if (!mkdir_if_not_exists("./build/")) return 1;
 
     Cmd cmd = {0};
-    cmd_append(&cmd, "cc");
+    cmd_append(&cmd, target_windows ? "x86_64-w64-mingw32-gcc" : "cc");
     cmd_append(&cmd, "-Wall", "-Wextra", "-ggdb");
     cmd_append(&cmd, "-o", "./build/main");
     cmd_append(&cmd, "./src/main.c");
     cmd_append(&cmd, "-I.", "-I./raylib/");
-    cmd_append(&cmd, "-L./raylib/", "-lraylib", "-lm");
+    cmd_append(&cmd, "-L./raylib/", target_windows ? "-lwinraylib" : "-lraylib", "-lm");
+    if (target_windows) {
+        cmd_append(&cmd, "-lwinmm", "-lgdi32");
+    }
     if (!cmd_run_sync_and_reset(&cmd)) return 1;
 
     const char *program_name = nob_shift(argv, argc);
